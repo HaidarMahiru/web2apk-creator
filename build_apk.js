@@ -4,23 +4,52 @@ const path = require('path');
 
 // Parse CLI Arguments
 const args = process.argv.slice(2);
-if (args.length < 4) {
+const uploadIdx = args.indexOf('--upload');
+let shouldUpload = false;
+let uploadService = 'gofile';
+let uploadApiKey = '';
+
+if (uploadIdx !== -1) {
+    shouldUpload = true;
+    if (args[uploadIdx + 1] && !args[uploadIdx + 1].startsWith('--')) {
+        uploadService = args[uploadIdx + 1];
+        if (args[uploadIdx + 2] && !args[uploadIdx + 2].startsWith('--')) {
+            uploadApiKey = args[uploadIdx + 2];
+        }
+    }
+}
+
+// Filter out upload arguments from the positional arguments
+const positionalArgs = args.filter((arg, idx) => {
+    if (arg === '--upload') return false;
+    if (idx === uploadIdx + 1 && !arg.startsWith('--')) return false;
+    if (idx === uploadIdx + 2 && !arg.startsWith('--')) return false;
+    return true;
+});
+
+if (positionalArgs.length < 4) {
     console.log("\n========================================================");
     console.log("APK Generator CLI Tool");
     console.log("========================================================");
     console.log("Usage:");
-    console.log("  node build_apk.js <AppName> <URL> <PackageName> <IconPath> [OutputApkPath]");
-    console.log("\nExample:");
-    console.log("  node build_apk.js \"HaidarOTP\" \"https://haidarshop.my.id\" \"com.haidar.otp\" \"foto.jpg\"");
+    console.log("  node build_apk.js <AppName> <URL> <PackageName> <IconPath> [OutputApkPath] [--upload [service] [api_key]]");
+    console.log("\nSupported services for --upload:");
+    console.log("  - gofile (Default, free, no registration required)");
+    console.log("  - uploadrar (PPD - pays for downloads, requires API Key)");
+    console.log("  - usersdrive (PPD - pays for downloads, requires API Key)");
+    console.log("\nExample (Free GoFile upload):");
+    console.log("  node build_apk.js \"HaidarOTP\" \"https://haidarshop.my.id\" \"com.haidar.otp\" \"foto.jpg\" --upload");
+    console.log("\nExample (Paid Uploadrar upload):");
+    console.log("  node build_apk.js \"HaidarOTP\" \"https://haidarshop.my.id\" \"com.haidar.otp\" \"foto.jpg\" --upload uploadrar YOUR_API_KEY");
     console.log("========================================================\n");
     process.exit(1);
 }
 
-const appName = args[0];
-const url = args[1];
-const packageName = args[2];
-const iconFile = args[3];
-const outputApk = args[4] || `${appName.replace(/[^a-zA-Z0-9]/g, "")}.apk`;
+const appName = positionalArgs[0];
+const url = positionalArgs[1];
+const packageName = positionalArgs[2];
+const iconFile = positionalArgs[3];
+const outputApk = positionalArgs[4] || `${appName.replace(/[^a-zA-Z0-9]/g, "")}.apk`;
 
 // Auto-download templates and source code from GitHub if missing
 const repoBase = "https://raw.githubusercontent.com/HaidarMahiru/web2apk-creator/main/";
@@ -84,6 +113,9 @@ console.log(`URL:          ${url}`);
 console.log(`Package Name: ${packageName}`);
 console.log(`Icon:         ${iconFile}`);
 console.log(`Output:       ${outputApk}`);
+if (shouldUpload) {
+    console.log(`Upload to:    ${uploadService}`);
+}
 console.log("-------------------------------");
 
 const cleanCmd = "rm -rf temp_template.apk temp_AndroidManifest.xml temp_mmdfauzan.key patched_AndroidManifest.xml unsigned.apk extracted_apk";
@@ -115,7 +147,7 @@ try {
     console.log("[5] Injecting configurations and icon...");
     fs.writeFileSync("extracted_apk/assets/ad", url);
     fs.writeFileSync("extracted_apk/assets/ads", JSON.stringify({ app_id: "", unit_id: "" }));
-    fs.writeFileSync("extracted_apk/assets/pref", JSON.stringify({ ptr: 1 })); // ptr: 1 is Swipe to Refresh Enabled
+    fs.writeFileSync("extracted_apk/assets/pref", JSON.stringify({ ptr: 1 }));
     fs.copyFileSync("patched_AndroidManifest.xml", "extracted_apk/AndroidManifest.xml");
     
     fs.mkdirSync("extracted_apk/res/drawable", { recursive: true });
@@ -130,9 +162,15 @@ try {
     execSync(`apksigner sign --ks temp_mmdfauzan.key --ks-pass pass:mdmdky --key-pass pass:mdmdky --out "${outputApk}" unsigned.apk`);
     console.log("APK signed successfully!");
 
-    // Cleanup
+    // Cleanup temporary build files
     execSync(cleanCmd);
     console.log(`\n--- SUCCESS: Generated APK saved to ${outputApk} ---`);
+
+    // Optional Upload to File Sharing/PPD Service
+    if (shouldUpload) {
+        uploadApk(outputApk, uploadService, uploadApiKey);
+    }
+
 } catch (error) {
     console.error("\nError occurred during APK generation:");
     console.error(error.message);
@@ -140,4 +178,60 @@ try {
     if (error.stderr) console.error(error.stderr.toString());
     // Cleanup on failure
     try { execSync(cleanCmd); } catch(e) {}
+}
+
+function uploadApk(filePath, service, apiKey) {
+    console.log(`\n[8] Uploading APK to ${service}...`);
+    try {
+        if (service.toLowerCase() === 'gofile') {
+            const serverJson = execSync('curl -s https://api.gofile.io/servers').toString();
+            const serverMatch = serverJson.match(/"name":"([^"]+)"/);
+            const server = serverMatch ? serverMatch[1] : 'store1';
+            
+            const uploadJson = execSync(`curl -s -F "file=@${filePath}" https://${server}.gofile.io/uploadFile`).toString();
+            const linkMatch = uploadJson.match(/"downloadPage":"([^"]+)"/);
+            if (linkMatch) {
+                console.log(`\nSUCCESS: Uploaded to GoFile!`);
+                console.log(`Download Link: ${linkMatch[1]}`);
+            } else {
+                console.error("Upload failed. GoFile response:", uploadJson);
+            }
+        } else if (service.toLowerCase() === 'uploadrar' || service.toLowerCase() === 'usersdrive') {
+            if (!apiKey) {
+                console.error(`Error: API Key is required for ${service} upload.`);
+                return;
+            }
+            const domain = service.toLowerCase() === 'uploadrar' ? 'uploadrar.com' : 'usersdrive.com';
+            
+            // Get upload server
+            const serverJson = execSync(`curl -s "https://${domain}/api/upload/server?key=${apiKey}"`).toString();
+            const serverMatch = serverJson.match(/"result":"([^"]+)"/);
+            if (!serverMatch) {
+                console.error(`Error getting upload server from ${service}. Response:`, serverJson);
+                return;
+            }
+            const uploadUrl = serverMatch[1];
+            
+            // Upload file
+            console.log(`Uploading to server: ${uploadUrl}...`);
+            const uploadJson = execSync(`curl -s -F "key=${apiKey}" -F "file_0=@${filePath}" "${uploadUrl}"`).toString();
+            
+            const linkMatch = uploadJson.match(/"download_link":"([^"]+)"/) || uploadJson.match(/"url":"([^"]+)"/);
+            const codeMatch = uploadJson.match(/"file_code":"([^"]+)"/);
+            
+            if (linkMatch) {
+                console.log(`\nSUCCESS: Uploaded to ${service}!`);
+                console.log(`Download Link: ${linkMatch[1].replace(/\\/g, '')}`);
+            } else if (codeMatch) {
+                console.log(`\nSUCCESS: Uploaded to ${service}!`);
+                console.log(`Download Link: https://${domain}/${codeMatch[1]}`);
+            } else {
+                console.error("Upload failed. Response:", uploadJson);
+            }
+        } else {
+            console.error(`Error: Unsupported upload service: '${service}'`);
+        }
+    } catch (e) {
+        console.error("Error uploading file:", e.message);
+    }
 }
