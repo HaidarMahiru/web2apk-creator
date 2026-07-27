@@ -1,6 +1,6 @@
 import java.io.*;
 import java.util.*;
-import com.muhfau.bikinaplikasi.helper.*;
+import com.haidar.bikinaplikasi.helper.*;
 
 public class ManifestPatcher {
     public static void main(String[] args) throws Exception {

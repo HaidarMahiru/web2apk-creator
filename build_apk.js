@@ -29,14 +29,14 @@ const filesToDownload = [
     "template/AndroidManifest.xml",
     "template/mmdfauzan.key",
     "patcher_src/ManifestPatcher.java",
-    "patcher_src/com/muhfau/bikinaplikasi/helper/AXmlDecoder.java",
-    "patcher_src/com/muhfau/bikinaplikasi/helper/AXmlEditor.java",
-    "patcher_src/com/muhfau/bikinaplikasi/helper/Edit.java",
-    "patcher_src/com/muhfau/bikinaplikasi/helper/FileUtil.java",
-    "patcher_src/com/muhfau/bikinaplikasi/helper/LEDataInputStream.java",
-    "patcher_src/com/muhfau/bikinaplikasi/helper/LEDataOutputStream.java",
-    "patcher_src/com/muhfau/bikinaplikasi/helper/StringBlock.java",
-    "patcher_src/com/muhfau/bikinaplikasi/helper/StringUtils.java"
+    "patcher_src/com/haidar/bikinaplikasi/helper/AXmlDecoder.java",
+    "patcher_src/com/haidar/bikinaplikasi/helper/AXmlEditor.java",
+    "patcher_src/com/haidar/bikinaplikasi/helper/Edit.java",
+    "patcher_src/com/haidar/bikinaplikasi/helper/FileUtil.java",
+    "patcher_src/com/haidar/bikinaplikasi/helper/LEDataInputStream.java",
+    "patcher_src/com/haidar/bikinaplikasi/helper/LEDataOutputStream.java",
+    "patcher_src/com/haidar/bikinaplikasi/helper/StringBlock.java",
+    "patcher_src/com/haidar/bikinaplikasi/helper/StringUtils.java"
 ];
 
 console.log("Checking and downloading required components...");
@@ -61,7 +61,7 @@ if (!fs.existsSync("build_patcher/ManifestPatcher.class")) {
     console.log("Compiling ManifestPatcher...");
     fs.mkdirSync("build_patcher", { recursive: true });
     try {
-        execSync("javac -d build_patcher patcher_src/ManifestPatcher.java patcher_src/com/muhfau/bikinaplikasi/helper/*.java");
+        execSync("javac -d build_patcher patcher_src/ManifestPatcher.java patcher_src/com/haidar/bikinaplikasi/helper/*.java");
     } catch (e) {
         console.error("Error compiling Java patcher. Ensure JDK is installed.");
         process.exit(1);

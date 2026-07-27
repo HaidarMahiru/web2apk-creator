@@ -1,4 +1,4 @@
-package com.muhfau.bikinaplikasi.helper;
+package com.haidar.bikinaplikasi.helper;
 
 /* JADX INFO: loaded from: classes.dex */
 public class StringBlock {
@@ -88,9 +88,9 @@ public class StringBlock {
         sb.append('>');
     }
 
-    public static com.muhfau.bikinaplikasi.helper.StringBlock read(com.muhfau.bikinaplikasi.helper.LEDataInputStream lEDataInputStream) throws java.io.IOException {
+    public static com.haidar.bikinaplikasi.helper.StringBlock read(com.haidar.bikinaplikasi.helper.LEDataInputStream lEDataInputStream) throws java.io.IOException {
         lEDataInputStream.skipCheckInt(CHUNK_STRINGBLOCK);
-        com.muhfau.bikinaplikasi.helper.StringBlock stringBlock = new com.muhfau.bikinaplikasi.helper.StringBlock();
+        com.haidar.bikinaplikasi.helper.StringBlock stringBlock = new com.haidar.bikinaplikasi.helper.StringBlock();
         int i = lEDataInputStream.readInt();
         stringBlock.chunkSize = i;
         java.lang.System.out.println("chunkSize " + i);
@@ -214,20 +214,20 @@ public class StringBlock {
         }
     }
 
-    public void write(com.muhfau.bikinaplikasi.helper.LEDataOutputStream lEDataOutputStream) throws java.io.IOException {
+    public void write(com.haidar.bikinaplikasi.helper.LEDataOutputStream lEDataOutputStream) throws java.io.IOException {
         java.util.ArrayList arrayList = new java.util.ArrayList(getSize());
         getStrings(arrayList);
         write(arrayList, lEDataOutputStream);
     }
 
-    public void write(java.util.List<java.lang.String> list, com.muhfau.bikinaplikasi.helper.LEDataOutputStream lEDataOutputStream) throws java.io.IOException {
+    public void write(java.util.List<java.lang.String> list, com.haidar.bikinaplikasi.helper.LEDataOutputStream lEDataOutputStream) throws java.io.IOException {
         java.io.ByteArrayOutputStream byteArrayOutputStream = new java.io.ByteArrayOutputStream();
-        com.muhfau.bikinaplikasi.helper.LEDataOutputStream lEDataOutputStream2 = new com.muhfau.bikinaplikasi.helper.LEDataOutputStream(byteArrayOutputStream);
+        com.haidar.bikinaplikasi.helper.LEDataOutputStream lEDataOutputStream2 = new com.haidar.bikinaplikasi.helper.LEDataOutputStream(byteArrayOutputStream);
         int size = list.size();
         int[] iArr = new int[size];
         int length = 0;
         java.io.ByteArrayOutputStream byteArrayOutputStream2 = new java.io.ByteArrayOutputStream();
-        com.muhfau.bikinaplikasi.helper.LEDataOutputStream lEDataOutputStream3 = new com.muhfau.bikinaplikasi.helper.LEDataOutputStream(byteArrayOutputStream2);
+        com.haidar.bikinaplikasi.helper.LEDataOutputStream lEDataOutputStream3 = new com.haidar.bikinaplikasi.helper.LEDataOutputStream(byteArrayOutputStream2);
         for (int i = 0; i < size; i++) {
             iArr[i] = length;
             char[] charArray = list.get(i).toCharArray();

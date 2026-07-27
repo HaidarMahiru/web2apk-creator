@@ -8,3 +8,5 @@ extracted_apk/
 build/
 .system_generated/
 *.log
+build_apk.py
+foto.jpg

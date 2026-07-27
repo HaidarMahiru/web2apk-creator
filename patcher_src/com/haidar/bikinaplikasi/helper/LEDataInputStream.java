@@ -1,4 +1,4 @@
-package com.muhfau.bikinaplikasi.helper;
+package com.haidar.bikinaplikasi.helper;
 
 /* JADX INFO: loaded from: classes.dex */
 public final class LEDataInputStream implements java.io.DataInput {
