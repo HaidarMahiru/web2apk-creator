@@ -4,12 +4,16 @@ const path = require('path');
 
 // Parse CLI Arguments
 const args = process.argv.slice(2);
+const noUploadIdx = args.indexOf('--no-upload');
 const uploadIdx = args.indexOf('--upload');
-let shouldUpload = false;
+
+let shouldUpload = true;
 let uploadService = 'gofile';
 let uploadApiKey = '';
 
-if (uploadIdx !== -1) {
+if (noUploadIdx !== -1) {
+    shouldUpload = false;
+} else if (uploadIdx !== -1) {
     shouldUpload = true;
     if (args[uploadIdx + 1] && !args[uploadIdx + 1].startsWith('--')) {
         uploadService = args[uploadIdx + 1];
@@ -19,11 +23,14 @@ if (uploadIdx !== -1) {
     }
 }
 
-// Filter out upload arguments from the positional arguments
+// Filter out upload/no-upload arguments from the positional arguments
 const positionalArgs = args.filter((arg, idx) => {
+    if (arg === '--no-upload') return false;
     if (arg === '--upload') return false;
-    if (idx === uploadIdx + 1 && !arg.startsWith('--')) return false;
-    if (idx === uploadIdx + 2 && !arg.startsWith('--')) return false;
+    if (uploadIdx !== -1) {
+        if (idx === uploadIdx + 1 && !arg.startsWith('--')) return false;
+        if (idx === uploadIdx + 2 && !arg.startsWith('--')) return false;
+    }
     return true;
 });
 
@@ -32,13 +39,19 @@ if (positionalArgs.length < 4) {
     console.log("APK Generator CLI Tool");
     console.log("========================================================");
     console.log("Usage:");
-    console.log("  node build_apk.js <AppName> <URL> <PackageName> <IconPath> [OutputApkPath] [--upload [service] [api_key]]");
+    console.log("  node build_apk.js <AppName> <URL> <PackageName> <IconPath> [OutputApkPath] [--upload <service> <api_key> | --no-upload]");
+    console.log("\nBehavior:");
+    console.log("  - By default, the APK is generated locally AND automatically uploaded to GoFile.");
+    console.log("  - To disable uploading, use the '--no-upload' flag.");
+    console.log("  - To upload to a specific service, use the '--upload <service> <api_key>' parameter.");
     console.log("\nSupported services for --upload:");
-    console.log("  - gofile (Default, free, no registration required)");
+    console.log("  - gofile (Free, no registration required)");
     console.log("  - uploadrar (PPD - pays for downloads, requires API Key)");
     console.log("  - usersdrive (PPD - pays for downloads, requires API Key)");
-    console.log("\nExample (Free GoFile upload):");
-    console.log("  node build_apk.js \"HaidarOTP\" \"https://haidarshop.my.id\" \"com.haidar.otp\" \"foto.jpg\" --upload");
+    console.log("\nExample (Default auto-upload to GoFile):");
+    console.log("  node build_apk.js \"HaidarOTP\" \"https://haidarshop.my.id\" \"com.haidar.otp\" \"foto.jpg\"");
+    console.log("\nExample (Save locally only, no upload):");
+    console.log("  node build_apk.js \"HaidarOTP\" \"https://haidarshop.my.id\" \"com.haidar.otp\" \"foto.jpg\" --no-upload");
     console.log("\nExample (Paid Uploadrar upload):");
     console.log("  node build_apk.js \"HaidarOTP\" \"https://haidarshop.my.id\" \"com.haidar.otp\" \"foto.jpg\" --upload uploadrar YOUR_API_KEY");
     console.log("========================================================\n");
@@ -115,6 +128,8 @@ console.log(`Icon:         ${iconFile}`);
 console.log(`Output:       ${outputApk}`);
 if (shouldUpload) {
     console.log(`Upload to:    ${uploadService}`);
+} else {
+    console.log(`Upload:       Disabled (--no-upload)`);
 }
 console.log("-------------------------------");
 
