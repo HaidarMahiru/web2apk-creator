@@ -1,0 +1,10 @@
+*.apk
+*.idsig
+*.tmp
+temp_*
+patched_AndroidManifest.xml
+unsigned.apk
+extracted_apk/
+build/
+.system_generated/
+*.log
