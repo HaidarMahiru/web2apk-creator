@@ -206,15 +206,17 @@ function uploadApk(filePath, service, apiKey) {
             // Get upload server
             const serverJson = execSync(`curl -s "https://${domain}/api/upload/server?key=${apiKey}"`).toString();
             const serverMatch = serverJson.match(/"result":"([^"]+)"/);
+            const sessMatch = serverJson.match(/"sess_id":"([^"]+)"/);
             if (!serverMatch) {
                 console.error(`Error getting upload server from ${service}. Response:`, serverJson);
                 return;
             }
             const uploadUrl = serverMatch[1];
+            const sessId = sessMatch ? sessMatch[1] : '';
             
             // Upload file
             console.log(`Uploading to server: ${uploadUrl}...`);
-            const uploadJson = execSync(`curl -s -F "key=${apiKey}" -F "file_0=@${filePath}" "${uploadUrl}"`).toString();
+            const uploadJson = execSync(`curl -s -F "key=${apiKey}" -F "sess_id=${sessId}" -F "file_0=@${filePath}" "${uploadUrl}"`).toString();
             
             const linkMatch = uploadJson.match(/"download_link":"([^"]+)"/) || uploadJson.match(/"url":"([^"]+)"/);
             const codeMatch = uploadJson.match(/"file_code":"([^"]+)"/);
@@ -222,7 +224,7 @@ function uploadApk(filePath, service, apiKey) {
             if (linkMatch) {
                 console.log(`\nSUCCESS: Uploaded to ${service}!`);
                 console.log(`Download Link: ${linkMatch[1].replace(/\\/g, '')}`);
-            } else if (codeMatch) {
+            } else if (codeMatch && codeMatch[1] !== 'undef') {
                 console.log(`\nSUCCESS: Uploaded to ${service}!`);
                 console.log(`Download Link: https://${domain}/${codeMatch[1]}`);
             } else {
